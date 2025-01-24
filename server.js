@@ -3,58 +3,36 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const SHAPES_FILE = path.join(__dirname, 'public/shapes.json');
 
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Middleware to parse JSON requests
 app.use(express.json());
+app.use(express.static('public'));
 
-// Endpoint to get the shapes data
+// Load shapes.json
 app.get('/shapes', (req, res) => {
-    fs.readFile(path.join(__dirname, 'public', 'shapes.json'), 'utf8', (err, data) => {
+    fs.readFile(SHAPES_FILE, 'utf8', (err, data) => {
         if (err) {
-            res.status(500).send('Error reading shapes data');
-        } else {
-            res.json(JSON.parse(data));
+            console.error("Error reading shapes file:", err);
+            res.status(500).json({ error: "Error reading shapes file" });
+            return;
         }
+        res.json(JSON.parse(data));
     });
 });
 
-// Endpoint to save the shapes data
+// Save shapes.json
 app.post('/save-shapes', (req, res) => {
-    fs.writeFile(path.join(__dirname, 'public', 'shapes.json'), JSON.stringify(req.body, null, 2), (err) => {
+    fs.writeFile(SHAPES_FILE, JSON.stringify(req.body, null, 2), (err) => {
         if (err) {
-            res.status(500).send('Error saving shapes data');
-        } else {
-            res.send('Shapes data saved successfully');
+            console.error("Error saving shapes:", err);
+            res.status(500).json({ error: "Error saving shapes" });
+            return;
         }
+        res.json({ message: "Shapes saved successfully" });
     });
 });
 
-// Endpoint to get color counts
-app.get('/color-count', (req, res) => {
-    fs.readFile(path.join(__dirname, 'public', 'shapes.json'), 'utf8', (err, data) => {
-        if (err) {
-            res.status(500).send('Error reading shapes data');
-        } else {
-            const shapes = JSON.parse(data);
-            let colorCount = { red: 0, yellow: 0, green: 0, white: 0 };
-
-            shapes.forEach(shape => {
-                if (shape.color === "#FF0000") colorCount.red++;
-                else if (shape.color === "#FFFF00") colorCount.yellow++;
-                else if (shape.color === "#008000") colorCount.green++;
-                else colorCount.white++;
-            });
-
-            res.json(colorCount);
-        }
-    });
-});
-
-// Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server running at http://localhost:${PORT}`);
 });
