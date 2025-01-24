@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gundavali Hutments - Admin</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        canvas {
+            border: 1px solid black;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gundavali Hutments - Admin Panel</h1>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = 1200;
+        canvas.height = 1400;
+
+        let shapes = [];
+
+        async function fetchShapes() {
+            const response = await fetch('/shapes');
+            shapes = await response.json();
+            drawShapes();
+        }
+
+        function drawShapes() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            shapes.forEach((shape, index) => {
+                ctx.fillStyle = shape.color;
+                ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+                ctx.strokeStyle = "black";
+                ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+            });
+        }
+
+        function changeColor(index) {
+            const colors = ["#FFFFFF", "#FF0000", "#FFFF00", "#008000"]; // White, Red, Yellow, Green
+            let currentColor = shapes[index].color;
+            let nextColor = colors[(colors.indexOf(currentColor) + 1) % colors.length];
+            shapes[index].color = nextColor;
+            drawShapes();
+            saveShapes();
+        }
+
+        function saveShapes() {
+            fetch('/update-shapes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(shapes)
+            });
+        }
+
+        canvas.addEventListener("click", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            shapes.forEach((shape, index) => {
+                if (clickX >= shape.x && clickX <= shape.x + shape.width &&
+                    clickY >= shape.y && clickY <= shape.y + shape.height) {
+                    changeColor(index);
+                }
+            });
+        });
+
+        fetchShapes();
+    </script>
+</body>
+</html>

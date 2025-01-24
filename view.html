@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gundavali Hutments - Read-Only View</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gundavali Hutments - Read-Only View</h1>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = 1200;
+        canvas.height = 1400;
+
+        async function fetchShapes() {
+            const response = await fetch('/shapes');
+            const shapes = await response.json();
+            drawShapes(shapes);
+        }
+
+        function drawShapes(shapes) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            shapes.forEach(shape => {
+                ctx.fillStyle = shape.color;
+                ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+                ctx.strokeStyle = "black";
+                ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+            });
+        }
+
+        fetchShapes();
+        setInterval(fetchShapes, 3000); // Refresh every 3 seconds
+    </script>
+</body>
+</html>
