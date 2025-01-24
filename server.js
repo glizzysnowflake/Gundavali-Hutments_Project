@@ -1,64 +1,31 @@
 const express = require('express');
 const fs = require('fs');
-const app = express();
+const path = require('path');
 
-app.use(express.static(__dirname));
+const app = express();
+const PORT = 3000;
+
+app.use(express.static('public'));
 app.use(express.json());
 
-app.get('/shapes', (req, res) => {
-    fs.readFile('shapes.json', (err, data) => {
-        if (err) {
-            res.status(500).send('Error reading shapes data.');
-            return;
-        }
-        res.json(JSON.parse(data));
-    });
+// Serve shapes.json
+app.get('/shapes.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'shapes.json'));
 });
 
+// Save updated shapes
 app.post('/save-shapes', (req, res) => {
-    fs.writeFile('shapes.json', JSON.stringify(req.body, null, 2), err => {
+    const shapes = req.body;
+    fs.writeFile(path.join(__dirname, 'public', 'shapes.json'), JSON.stringify(shapes, null, 2), (err) => {
         if (err) {
-            res.status(500).send('Error saving shapes.');
-            return;
+            console.error("Error saving shapes:", err);
+            res.status(500).json({ message: 'Error saving shapes' });
+        } else {
+            res.json({ message: 'Shapes saved successfully' });
         }
-        res.sendStatus(200);
     });
 });
 
-app.get('/color-count', (req, res) => {
-    fs.readFile('shapes.json', (err, data) => {
-        if (err) {
-            res.status(500).send('Error reading shapes data.');
-            return;
-        }
-        const shapes = JSON.parse(data);
-
-        const colorCount = {
-            red: 0,
-            yellow: 0,
-            green: 0,
-            white: 0
-        };
-
-        shapes.forEach(shape => {
-            switch (shape.color.toLowerCase()) {
-                case "#ff0000":
-                    colorCount.red++;
-                    break;
-                case "#ffff00":
-                    colorCount.yellow++;
-                    break;
-                case "#008000":
-                    colorCount.green++;
-                    break;
-                case "#ffffff":
-                    colorCount.white++;
-                    break;
-            }
-        });
-
-        res.json(colorCount);
-    });
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });
-
-app.listen(3000, () => console.log('Server running on port 3000'));
