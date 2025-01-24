@@ -18,7 +18,7 @@
 
     <script>
         function fetchShapes() {
-            fetch('/shapes.json') // Ensuring the correct file is used
+            fetch('shapes.json') // Ensuring the correct file is used
                 .then(response => response.json())
                 .then(data => {
                     drawShapes(data);
