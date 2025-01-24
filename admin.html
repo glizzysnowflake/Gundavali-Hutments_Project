@@ -21,7 +21,7 @@
         const colors = ["#FFFFFF", "#FF0000", "#FFFF00", "#008000"]; // White, Red, Yellow, Green
 
         function fetchShapes() {
-            fetch('/shapes.json')
+            fetch('shapes.json')
                 .then(response => response.json())
                 .then(data => {
                     shapes = data;
