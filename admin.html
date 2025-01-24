@@ -3,82 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gundavali Hutments - Admin</title>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        canvas {
-            border: 1px solid black;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-    <h1>Gundavali Hutments - Admin Panel</h1>
-    <canvas id="canvas"></canvas>
-
+    <title>Admin - Gundavali Hutments Progress</title>
     <script>
-        const canvas = document.getElementById("canvas");
-        const ctx = canvas.getContext("2d");
-
-        canvas.width = 1200;
-        canvas.height = 1400;
-
         let shapes = [];
 
-        async function fetchShapes() {
-            const response = await fetch('/shapes');
-            shapes = await response.json();
-            drawShapes();
+        function fetchShapes() {
+            fetch('/shapes')
+                .then(response => response.json())
+                .then(data => {
+                    shapes = data;
+                    drawShapes();
+                    updateColorCount();
+                })
+                .catch(error => console.error('Error fetching shapes:', error));
         }
 
         function drawShapes() {
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             shapes.forEach((shape, index) => {
                 ctx.fillStyle = shape.color;
                 ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
-                ctx.strokeStyle = "black";
                 ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
             });
         }
 
-        function changeColor(index) {
-            const colors = ["#FFFFFF", "#FF0000", "#FFFF00", "#008000"]; // White, Red, Yellow, Green
-            let currentColor = shapes[index].color;
-            let nextColor = colors[(colors.indexOf(currentColor) + 1) % colors.length];
-            shapes[index].color = nextColor;
-            drawShapes();
-            saveShapes();
+        function changeColor(event) {
+            const canvas = document.getElementById("canvas");
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const colors = ["#FFFFFF", "#FF0000", "#FFFF00", "#008000"];
+            shapes.forEach(shape => {
+                if (x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height) {
+                    let currentIndex = colors.indexOf(shape.color);
+                    shape.color = colors[(currentIndex + 1) % colors.length];
+                    drawShapes();
+                    saveShapes();
+                    updateColorCount();
+                }
+            });
         }
 
         function saveShapes() {
-            fetch('/update-shapes', {
+            fetch('/save-shapes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(shapes)
-            });
+            }).catch(error => console.error('Error saving shapes:', error));
         }
 
-        canvas.addEventListener("click", (event) => {
-            const rect = canvas.getBoundingClientRect();
-            const clickX = event.clientX - rect.left;
-            const clickY = event.clientY - rect.top;
+        function updateColorCount() {
+            fetch('/color-count')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('countRed').textContent = data.red;
+                    document.getElementById('countYellow').textContent = data.yellow;
+                    document.getElementById('countGreen').textContent = data.green;
+                    document.getElementById('countWhite').textContent = data.white;
+                })
+                .catch(error => console.error('Error fetching color count:', error));
+        }
 
-            shapes.forEach((shape, index) => {
-                if (clickX >= shape.x && clickX <= shape.x + shape.width &&
-                    clickY >= shape.y && clickY <= shape.y + shape.height) {
-                    changeColor(index);
-                }
-            });
-        });
-
-        fetchShapes();
+        window.onload = () => {
+            fetchShapes();
+            setInterval(updateColorCount, 5000);
+        };
     </script>
+</head>
+<body>
+    <h1>Gundavali Hutments Progress - Admin Panel</h1>
+    <canvas id="canvas" width="1000" height="1000" style="border:1px solid black;" onclick="changeColor(event)"></canvas>
+    
+    <h2>Status Summary</h2>
+    <p>Demolished: <span id="countRed" style="color: red; font-weight: bold;">0</span></p>
+    <p>Keys Received: <span id="countYellow" style="color: yellow; font-weight: bold;">0</span></p>
+    <p>Cheque Received: <span id="countGreen" style="color: green; font-weight: bold;">0</span></p>
+    <p>Pending: <span id="countWhite" style="color: black; font-weight: bold;">0</span></p>
 </body>
 </html>

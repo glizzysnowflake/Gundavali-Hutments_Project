@@ -4,49 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gundavali Hutments - Read-Only View</title>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        canvas {
-            border: 1px solid black;
-        }
-    </style>
-</head>
-<body>
-    <h1>Gundavali Hutments - Read-Only View</h1>
-    <canvas id="canvas"></canvas>
-
     <script>
-        const canvas = document.getElementById("canvas");
-        const ctx = canvas.getContext("2d");
-
-        canvas.width = 1200;
-        canvas.height = 1400;
-
-        async function fetchShapes() {
-            const response = await fetch('/shapes');
-            const shapes = await response.json();
-            drawShapes(shapes);
+        function fetchShapes() {
+            fetch('/shapes')
+                .then(response => response.json())
+                .then(data => {
+                    drawShapes(data);
+                    updateColorCount();
+                })
+                .catch(error => console.error('Error fetching shapes:', error));
         }
 
         function drawShapes(shapes) {
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             shapes.forEach(shape => {
                 ctx.fillStyle = shape.color;
                 ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
-                ctx.strokeStyle = "black";
                 ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
             });
         }
 
-        fetchShapes();
-        setInterval(fetchShapes, 3000); // Refresh every 3 seconds
+        function updateColorCount() {
+            fetch('/color-count')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('countRed').textContent = data.red;
+                    document.getElementById('countYellow').textContent = data.yellow;
+                    document.getElementById('countGreen').textContent = data.green;
+                    document.getElementById('countWhite').textContent = data.white;
+                })
+                .catch(error => console.error('Error fetching color count:', error));
+        }
+
+        window.onload = () => {
+            fetchShapes();
+            setInterval(fetchShapes, 5000);
+            setInterval(updateColorCount, 5000);
+        };
     </script>
+</head>
+<body>
+    <h1>Gundavali Hutments - Read-Only View</h1>
+    <canvas id="canvas" width="1000" height="1000" style="border:1px solid black;"></canvas>
+
+    <h2>Status Summary</h2>
+    <p>Demolished: <span id="countRed" style="color: red; font-weight: bold;">0</span></p>
+    <p>Keys Received: <span id="countYellow" style="color: yellow; font-weight: bold;">0</span></p>
+    <p>Cheque Received: <span id="countGreen" style="color: green; font-weight: bold;">0</span></p>
+    <p>Pending: <span id="countWhite" style="color: black; font-weight: bold;">0</span></p>
 </body>
 </html>
